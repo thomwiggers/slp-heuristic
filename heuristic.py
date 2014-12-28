@@ -3,7 +3,20 @@ from functools import partial
 from itertools import combinations
 import pickle
 import os.path
+import logging
 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+fh = logging.FileHandler('heuristic.log')
+fh.setLevel(logging.INFO)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+ch.setLevel(logging.DEBUG)
+
+logger.addHandler(ch)
+logger.addHandler(fh)
 
 M = [0b1000100100101011,
      0b0100100000011001,
@@ -67,6 +80,7 @@ def D(S, i=None):
     if i is None:
         weights = list(map(partial(D_, S), range(len(M))))
         precalced_weights.append((S.copy(), weights))
+        logger.debug("Found weight %s for S: %s", weights, S)
         return weights
     else:
         D_(S, i)
@@ -88,7 +102,9 @@ def D_(S, i):
             for row in s:
                 candidate = [row ^ a for a in S]
                 if M[i] in candidate:
-                    mindist = distance
+                    if distance < mindist:
+                        logger.debug("Updating mindist to %d", distance)
+                        mindist = distance
                     return distance
                 candidates.append(candidate)
             return min(map(lambda c: d(c, distance+1), candidates))
@@ -112,17 +128,30 @@ def hamming_weight_distances():
     return w
 
 
+def evaluate_row(S, newrow):
+    option = S + [newrow]
+    weights = D(option)
+    return (newrow, weights)
+
+
 def find_next_base(minsum):
-    options = []
+    rows = set()
     for (rowa, rowb) in combinations(S, 2):
         newrow = rowa ^ rowb
-        if newrow in S or newrow in map(lambda x: x[0], options):
+        if newrow in S:
             continue
-        if newrow in M:
+        elif newrow in M:
+            logging.info("Short-circuited because we found a result: %s",
+                         newrow)
             return newrow
+        else:
+            rows.add(newrow)
 
-        option = S + [newrow]
-        weights = D(option)
+    results = pool.map(partial(evaluate_row, S), rows)
+    logger.debug("find_next_base inbetween results: {}".format(results))
+
+    options = []
+    for newrow, weights in results:
         weightsum = sum(weights)
         if weightsum < minsum:
             minsum = weightsum
@@ -133,8 +162,8 @@ def find_next_base(minsum):
     if len(options) == 1:
         return options[0][0]
     else:
-        print("Tie! Available options: {}".format(list(map(lambda x: bin(x[0]),
-                                                           options))))
+        logger.debug("Tie! Available options: {}".format(
+            list(map(lambda x: bin(x[0]), options))))
         return max(options, key=lambda k: norm(k[1]))[0]
 
 
@@ -157,7 +186,7 @@ if __name__ == "__main__":
     filename = "state.pickle"
 
     if len(sys.argv) == 2:
-        print("Testing mode!")
+        logger.info("Testing mode!")
         filename = "testing.pickle"
         testing()
 
@@ -170,11 +199,11 @@ if __name__ == "__main__":
     current_weights = D(S)
     save_state(filename)
     while not sum(current_weights) == 0:
-        print("Weights: {}".format(current_weights))
-        print("S:\n{}".format(list(map(bin, S))))
+        logger.info("Weights: {}".format(current_weights))
+        logger.info("S: {}".format(list(map(bin, S))))
         print("Calculating next S…")
         newbase = find_next_base(sum(current_weights))
-        print("Found new base {}".format(bin(newbase)))
+        logger.info("Found new base {}".format(bin(newbase)))
         S += [newbase]
         save_state(filename)
         current_weights = D(S)
