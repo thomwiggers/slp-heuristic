@@ -103,7 +103,9 @@ def D_(S, i):
                 candidate = [row ^ a for a in S]
                 if M[i] in candidate:
                     if distance < mindist:
-                        logger.debug("Updating mindist to %d", distance)
+                        logger.debug(
+                            "Updating mindist for M[%d] with S=%s to %d",
+                            i, S, distance)
                         mindist = distance
                     return distance
                 candidates.append(candidate)
