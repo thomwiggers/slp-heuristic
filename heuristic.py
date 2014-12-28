@@ -65,8 +65,8 @@ def testing():
 def D(S, i=None):
     """Distance function"""
     if i is None:
-        weights = list(pool.imap(partial(D_, S), range(len(M))))
-        precalced_weights.append((S, weights))
+        weights = list(map(partial(D_, S), range(len(M))))
+        precalced_weights.append((S.copy(), weights))
         return weights
     else:
         D_(S, i)
