@@ -100,7 +100,7 @@ def D_(S, i):
         else:
             candidates = []
             for row in s:
-                candidate = [row ^ a for a in S]
+                candidate = (row ^ a for a in S)
                 if M[i] in candidate:
                     if distance < mindist:
                         logger.debug(
