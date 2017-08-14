@@ -67,6 +67,8 @@ S = [0b1000000000000000,
      0b0000000000000010,
      0b0000000000000001]
 
+program = [('x{}'.format(i), '') for i in range(S[0].bit_length())]
+
 
 pool = None
 testing = False
@@ -75,7 +77,7 @@ current_weights = None
 
 
 def testing():
-    global M, S
+    global M, S, program
     M = [0b11100,
          0b01011,
          0b10111,
@@ -88,6 +90,8 @@ def testing():
          0b00100,
          0b00010,
          0b00001]
+
+    program = [('x{}'.format(i), '') for i in range(S[0].bit_length())]
 
 
 def D(S, i=None):
@@ -103,7 +107,7 @@ def D(S, i=None):
 
 def D_(S, i):
     if not current_weights:
-        mindist = sum([1 for a in bin(M[i]) if a == '1'])
+        mindist = bin(M[i]).count('1')
     else:
         mindist = current_weights[i]
 
@@ -124,7 +128,7 @@ def D_(S, i):
                         mindist = distance
                     return distance
                 candidates.append(candidate)
-            return min(map(lambda c: d(c, distance+1), candidates))
+            return min(map(lambda c: d(c, distance + 1), candidates))
 
     if M[i] in S:
         return 0
@@ -140,29 +144,31 @@ def norm(weights):
 
 
 def hamming_weight_distances():
-    w = [sum([1 for a in bin(m) if a == '1']) - 1 for m in M]
+    w = [bin(m).count('1') - 1 for m in M]
     precalced_weights.append((S.copy(), w))
     return w
 
 
 def evaluate_row(S, newrow):
-    option = S + [newrow]
+    option = S + [newrow[0]]
     weights = D(option)
     return (newrow, weights)
 
 
 def find_next_base(minsum):
     rows = set()
-    for (rowa, rowb) in combinations(S, 2):
-        newrow = rowa ^ rowb
+    for (rowai, rowbi) in combinations(range(len(S)), 2):
+        newrow = S[rowai] ^ S[rowbi]
         if newrow in S:
             continue
         elif newrow in M:
             logging.info("Short-circuited because we found a result: %s",
                          newrow)
+            program.append(('y{}'.format(M.index(newrow)), '{} ^ {}'.format(
+                program[rowai][0], program[rowbi][0])))
             return newrow
         else:
-            rows.add(newrow)
+            rows.add((newrow, rowai, rowbi))
 
     results = pool.map(partial(evaluate_row, S), rows)
     logger.debug("find_next_base inbetween results: {}".format(results))
@@ -177,24 +183,29 @@ def find_next_base(minsum):
             options.append((newrow, weights))
 
     if len(options) == 1:
-        return options[0][0]
+        program.append(('t{}'.format(len(program)), '{} ^ {}'.format(
+            program[options[0][0][1]][0], program[options[0][0][2]][0])))
+        return options[0][0][0]
     else:
         logger.debug("Tie! Available options: {}".format(
-            list(map(lambda x: bin(x[0]), options))))
-        return max(options, key=lambda k: norm(k[1]))[0]
+            list(map(lambda x: bin(x[0][0]), options))))
+        maxvalue = max(options, key=lambda k: norm(k[1]))[0]
+        program.append(('t{}'.format(len(program)), '{} ^ {}'.format(
+            program[maxvalue[1]][0], program[maxvalue[2]][0])))
+        return maxvalue[0]
 
 
 def save_state(filename):
     with open(filename, 'wb') as f:
-        pickle.dump((S, precalced_weights), f)
+        pickle.dump((S, precalced_weights, program), f)
 
 
 def load_state(filename):
-    global S, precalced_weights
+    global S, precalced_weights, program
     if not os.path.exists(filename):
         return
     with open(filename, 'rb') as f:
-        S, precalced_weights = pickle.load(f)
+        S, precalced_weights, program = pickle.load(f)
 
 
 if __name__ == "__main__":
@@ -227,3 +238,6 @@ if __name__ == "__main__":
 
     print("Final S:")
     print(list(map(bin, S)))
+    print('As program:')
+    for result, computation in program[S[0].bit_length():]:
+        print(result, '=', computation)
