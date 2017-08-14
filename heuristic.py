@@ -128,7 +128,7 @@ def D_(S, i):
                         mindist = distance
                     return distance
                 candidates.append(candidate)
-            return min(map(lambda c: d(c, distance+1), candidates))
+            return min(map(lambda c: d(c, distance + 1), candidates))
 
     if M[i] in S:
         return 0
@@ -164,7 +164,8 @@ def find_next_base(minsum):
         elif newrow in M:
             logging.info("Short-circuited because we found a result: %s",
                          newrow)
-            program.append(('y{}'.format(M.index(newrow)), '{} ^ {}'.format(program[rowai][0], program[rowbi][0])))
+            program.append(('y{}'.format(M.index(newrow)), '{} ^ {}'.format(
+                program[rowai][0], program[rowbi][0])))
             return newrow
         else:
             rows.add((newrow, rowai, rowbi))
@@ -182,13 +183,15 @@ def find_next_base(minsum):
             options.append((newrow, weights))
 
     if len(options) == 1:
-        program.append(('t{}'.format(len(program)), '{} ^ {}'.format(program[options[0][0][1]][0], program[options[0][0][2]][0])))
+        program.append(('t{}'.format(len(program)), '{} ^ {}'.format(
+            program[options[0][0][1]][0], program[options[0][0][2]][0])))
         return options[0][0][0]
     else:
         logger.debug("Tie! Available options: {}".format(
             list(map(lambda x: bin(x[0][0]), options))))
         maxvalue = max(options, key=lambda k: norm(k[1]))[0]
-        program.append(('t{}'.format(len(program)), '{} ^ {}'.format(program[maxvalue[1]][0], program[maxvalue[2]][0])))
+        program.append(('t{}'.format(len(program)), '{} ^ {}'.format(
+            program[maxvalue[1]][0], program[maxvalue[2]][0])))
         return maxvalue[0]
 
 
@@ -203,7 +206,6 @@ def load_state(filename):
         return
     with open(filename, 'rb') as f:
         S, precalced_weights, program = pickle.load(f)
-
 
 
 if __name__ == "__main__":
