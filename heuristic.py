@@ -103,7 +103,7 @@ def D(S, i=None):
 
 def D_(S, i):
     if not current_weights:
-        mindist = sum([1 for a in bin(M[i]) if a == '1'])
+        mindist = bin(M[i]).count('1')
     else:
         mindist = current_weights[i]
 
@@ -140,7 +140,7 @@ def norm(weights):
 
 
 def hamming_weight_distances():
-    w = [sum([1 for a in bin(m) if a == '1']) - 1 for m in M]
+    w = [bin(m).count('1') - 1 for m in M]
     precalced_weights.append((S.copy(), w))
     return w
 
