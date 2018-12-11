@@ -2,7 +2,25 @@ Finding the shortest linear straight-line program using a heuristic
 ===================================================================
 
 Implements the 2013 paper by Boyar, Matthews and Peralta. See also
-https://thomwiggers.nl/proest.
+https://thomwiggers.nl/project/bachelors-thesis/.
+
+Referencing
+-----------
+
+Thom Wiggers. Implementing CAESAR candidate Prøst on ARM11. Student Undergraduate Research E-Journal!, Volume 1, 2015.
+
+```bibtex
+@inproceedings{Wiggers2015PoestOnARM,
+  title = "Implementing CAESAR candidate Prøst on ARM11",
+  author = "Thom Wiggers",
+  date = "2015-11-20",
+  journal = "Student Undergraduate Research E-Journal!",
+  volume = 1,
+  issn = "2468-0443",
+  url = "https://thomwiggers.nl/project/bachelors-thesis/",
+}
+```
+
 
 LICENCE
 -------
